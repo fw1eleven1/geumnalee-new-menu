@@ -7,7 +7,7 @@ export async function getWines(category: 'conventional' | 'natural', type?: stri
 	if (type) params.append('type', type);
 
 	const res = await fetch(`${API_BASE}/api/public/wines?${params}`, {
-		next: { revalidate: 3600 }, // 1시간마다 재검증
+		next: { revalidate: 3600 * 24 }, // 24시간마다 재검증
 	});
 
 	if (!res.ok) {
@@ -22,7 +22,7 @@ export async function getTapas(category?: 'main' | 'side'): Promise<Tapas[]> {
 	if (category) params.append('category', category);
 
 	const res = await fetch(`${API_BASE}/api/public/tapas?${params}`, {
-		next: { revalidate: 3600 },
+		next: { revalidate: 3600 * 24 },
 	});
 
 	if (!res.ok) {
