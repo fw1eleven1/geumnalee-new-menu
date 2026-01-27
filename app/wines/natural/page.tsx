@@ -1,7 +1,7 @@
 import { getAllNaturalWines } from '@/lib/api';
 import WineList from '@/components/WineList';
 
-export const revalidate = 3600 * 24; // 24시간마다 재검증
+export const revalidate = 86400; // 24시간마다 재검증
 
 export default async function NaturalWinesPage() {
 	const { red, orange, white } = await getAllNaturalWines();

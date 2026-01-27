@@ -94,10 +94,10 @@ export default function RecommendForm({ initialTapasOptions }: RecommendFormProp
 				myselect.wine === 'red'
 					? 'Red'
 					: myselect.wine === 'white'
-					? 'White'
-					: myselect.wine === 'orange'
-					? 'Orange'
-					: 'Sparkling'
+						? 'White'
+						: myselect.wine === 'orange'
+							? 'Orange'
+							: 'Sparkling',
 			);
 			setWineList(wines);
 			setRecommendWine(matches);

@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { getAllTapas } from '@/lib/api';
 import type { Tapas } from '@/types';
 
-export const revalidate = 3600 * 24; // 24시간마다 재검증
+export const revalidate = 86400; // 24시간마다 재검증
 
 function TapasItem({ item }: { item: Tapas }) {
 	return (

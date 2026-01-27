@@ -2,7 +2,7 @@ import { getTapas } from '@/lib/api';
 import RecommendForm from '@/components/RecommendForm';
 import type { TapasOption } from '@/components/RecommendForm';
 
-export const revalidate = 3600 * 24; // 24시간마다 재검증
+export const revalidate = 86400; // 24시간마다 재검증
 
 export default async function RecommendPage() {
 	// 서버에서 타파스 데이터를 빌드 시 가져옴
