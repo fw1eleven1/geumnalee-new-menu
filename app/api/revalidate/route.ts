@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       revalidatePath(path);
     } else {
       // 모든 메뉴 페이지 재검증
+      revalidatePath('/');
       revalidatePath('/tapas');
       revalidatePath('/wines/conventional');
       revalidatePath('/wines/natural');
