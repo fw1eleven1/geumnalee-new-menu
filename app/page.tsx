@@ -1,7 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { getMonthlyWines } from '@/lib/api';
+import MonthlyWineList from '@/components/MonthlyWineList';
 
-export default function HomePage() {
+export const revalidate = 86400;
+
+export default async function HomePage() {
+	const monthlyWines = await getMonthlyWines().catch(() => []);
+
 	return (
 		<div className='px-4 h-full'>
 			<div className='w-4/5 mx-auto my-10'>
@@ -83,6 +89,14 @@ export default function HomePage() {
 							<p className='tracking-tighter sm:tracking-normal'>리뷰 작성 시, 5천원 할인!</p>
 						</div>
 					</div>
+
+					{monthlyWines.length > 0 && (
+						<div className='w-full'>
+							<div className='border-t border-gray-300 w-full mb-6'></div>
+							<div className='my-4 text-lg font-bold'>이 달의 와인</div>
+							<MonthlyWineList items={monthlyWines} />
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

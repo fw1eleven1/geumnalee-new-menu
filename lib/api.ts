@@ -1,4 +1,4 @@
-import type { Wine, Tapas } from '@/types';
+import type { Wine, Tapas, MonthlyWineItem } from '@/types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010';
 
@@ -7,7 +7,7 @@ export async function getWines(category: 'conventional' | 'natural', type?: stri
 	if (type) params.append('type', type);
 
 	const res = await fetch(`${API_BASE}/api/public/wines?${params}`, {
-		next: { revalidate: 3600 * 24 }, // 24시간마다 재검증
+		next: { revalidate: 86400 }, // 24시간마다 재검증
 	});
 
 	if (!res.ok) {
@@ -22,7 +22,7 @@ export async function getTapas(category?: 'main' | 'side'): Promise<Tapas[]> {
 	if (category) params.append('category', category);
 
 	const res = await fetch(`${API_BASE}/api/public/tapas?${params}`, {
-		next: { revalidate: 3600 * 24 },
+		next: { revalidate: 86400 },
 	});
 
 	if (!res.ok) {
@@ -52,6 +52,18 @@ export async function getAllConventionalWines(): Promise<{
 		sparkling: wines.filter((w) => w.type === 'Sparkling'),
 		champagne: wines.filter((w) => w.type === 'Champagne'),
 	};
+}
+
+export async function getMonthlyWines(): Promise<MonthlyWineItem[]> {
+  const res = await fetch(`${API_BASE}/api/public/monthly-wines`, {
+    next: { revalidate: 86400 },
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch monthly wines');
+  }
+
+  return res.json();
 }
 
 export async function getAllNaturalWines(): Promise<{

@@ -29,3 +29,10 @@ export interface Tapas {
   img: string | null;
   category: 'main' | 'side';
 }
+
+export interface MonthlyWineItem {
+  id: string;
+  discountRate: number;
+  discountedPrice: number;
+  wine: Wine;
+}
