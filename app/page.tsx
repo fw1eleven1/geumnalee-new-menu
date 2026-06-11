@@ -74,17 +74,6 @@ export default async function HomePage() {
 									/>
 									<span className='tracking-tighter xs:tracking-normal'>네이버 영수증</span>
 								</div>
-								<div className='flex justify-center xs:justify-start items-center'>
-									<Image
-										src='/images/logo_catchtable.png'
-										alt='캐치테이블'
-										width={16}
-										height={16}
-										className='mr-1'
-										style={{ width: '16px', height: 'auto' }}
-									/>
-									<span>캐치테이블</span>
-								</div>
 							</div>
 							<p className='tracking-tighter sm:tracking-normal'>리뷰 작성 시, 5천원 할인!</p>
 						</div>
