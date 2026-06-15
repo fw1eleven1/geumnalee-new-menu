@@ -26,7 +26,7 @@ export default async function HomePage() {
 					<div className='flex flex-col gap-5 w-full max-w-md mb-8'>
 						<Link
 							href='/tapas'
-							className='group relative w-full py-5 px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
+							className='group relative w-full py-3 px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
 							<div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700'></div>
 							<div className='relative flex items-center justify-between'>
 								<span className='text-xl font-light tracking-[0.2em] uppercase'>MENU</span>
@@ -35,7 +35,7 @@ export default async function HomePage() {
 						</Link>
 						<Link
 							href='/wines/conventional'
-							className='group relative w-full py-5 px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
+							className='group relative w-full py-3 px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
 							<div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700'></div>
 							<div className='relative flex items-center justify-between'>
 								<span className='text-xl font-light tracking-[0.2em] uppercase'>WINELIST</span>
@@ -48,7 +48,7 @@ export default async function HomePage() {
 
 					<Link
 						href='/recommend'
-						className='group relative w-full py-5 px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
+						className='group relative w-full py-3 px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
 						<div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700'></div>
 						<div className='relative flex flex-col items-center justify-center gap-1'>
 							<div className='flex items-center justify-center'>
