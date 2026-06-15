@@ -23,7 +23,7 @@ export default async function HomePage() {
 					/>
 
 					{/* MENU & WINELIST Buttons */}
-					<div className='flex flex-col gap-5 w-full max-w-md mb-8'>
+					<div className='flex flex-col gap-5 w-full max-w-md mb-4'>
 						<Link
 							href='/tapas'
 							className='group relative w-full py-3 px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
@@ -44,7 +44,7 @@ export default async function HomePage() {
 						</Link>
 					</div>
 
-					<div className='border-t border-gray-300 w-full h-1 mb-6'></div>
+					<div className='border-t border-gray-300 w-full h-1 mb-4'></div>
 
 					<Link
 						href='/recommend'
