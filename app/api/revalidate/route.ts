@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
       revalidatePath('/tapas');
       revalidatePath('/wines/conventional');
       revalidatePath('/wines/natural');
+      revalidatePath('/wines/glass');
     }
 
     return NextResponse.json({ revalidated: true, now: Date.now() });

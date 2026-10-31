@@ -36,3 +36,9 @@ export interface MonthlyWineItem {
   discountedPrice: number;
   wine: Wine;
 }
+
+export interface GlassWineItem {
+  id: string;
+  glassPrice: number;
+  wine: Wine;
+}

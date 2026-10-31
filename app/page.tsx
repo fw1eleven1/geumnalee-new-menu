@@ -5,6 +5,26 @@ import MonthlyWineList from '@/components/MonthlyWineList';
 
 export const revalidate = 86400;
 
+function MenuButton({ href, label, sub }: { href: string; label: string; sub?: string }) {
+	return (
+		<Link
+			href={href}
+			className='group relative w-full py-3 px-5 sm:px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
+			<div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700'></div>
+			<div className='relative flex items-center justify-between gap-2'>
+				{/* 폰 폭에서 WINE BY THE GLASS 가 한 줄에 들어가도록 글자 크기·자간을 줄인다 */}
+				<span className='flex flex-wrap items-baseline gap-x-2'>
+					<span className='text-base min-[400px]:text-lg sm:text-xl font-light tracking-[0.12em] sm:tracking-[0.2em] uppercase'>
+						{label}
+					</span>
+					{sub && <span className='text-xs text-gray-500 tracking-[0.12em]'>{sub}</span>}
+				</span>
+				<span className='text-gray-400 group-hover:text-gray-600 transition-colors duration-300'>→</span>
+			</div>
+		</Link>
+	);
+}
+
 export default async function HomePage() {
 	const monthlyWines = await getMonthlyWines().catch(() => []);
 
@@ -24,24 +44,9 @@ export default async function HomePage() {
 
 					{/* MENU & WINELIST Buttons */}
 					<div className='flex flex-col gap-5 w-full max-w-md mb-4'>
-						<Link
-							href='/tapas'
-							className='group relative w-full py-3 px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
-							<div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700'></div>
-							<div className='relative flex items-center justify-between'>
-								<span className='text-xl font-light tracking-[0.2em] uppercase'>MENU</span>
-								<span className='text-gray-400 group-hover:text-gray-600 transition-colors duration-300'>→</span>
-							</div>
-						</Link>
-						<Link
-							href='/wines/conventional'
-							className='group relative w-full py-3 px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
-							<div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700'></div>
-							<div className='relative flex items-center justify-between'>
-								<span className='text-xl font-light tracking-[0.2em] uppercase'>WINELIST</span>
-								<span className='text-gray-400 group-hover:text-gray-600 transition-colors duration-300'>→</span>
-							</div>
-						</Link>
+						<MenuButton href='/tapas' label='MENU' />
+						<MenuButton href='/wines/conventional' label='WINELIST' sub='(BOTTLE)' />
+						<MenuButton href='/wines/glass' label='WINE BY THE GLASS' sub='(GLASS)' />
 					</div>
 
 					<div className='border-t border-gray-300 w-full h-1 mb-4'></div>

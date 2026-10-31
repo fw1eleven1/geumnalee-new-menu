@@ -1,4 +1,4 @@
-import type { Wine, Tapas, MonthlyWineItem } from '@/types';
+import type { Wine, Tapas, MonthlyWineItem, GlassWineItem } from '@/types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010';
 
@@ -64,6 +64,18 @@ export async function getMonthlyWines(): Promise<MonthlyWineItem[]> {
   }
 
   return res.json();
+}
+
+export async function getGlassWines(): Promise<GlassWineItem[]> {
+	const res = await fetch(`${API_BASE}/api/public/glass-wines`, {
+		next: { revalidate: 86400 },
+	});
+
+	if (!res.ok) {
+		throw new Error('Failed to fetch glass wines');
+	}
+
+	return res.json();
 }
 
 export async function getAllNaturalWines(): Promise<{
