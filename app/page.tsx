@@ -12,9 +12,10 @@ function MenuButton({ href, label, sub }: { href: string; label: string; sub?: s
 			className='group relative w-full py-3 px-5 sm:px-8 border border-gray-400 bg-white text-gray-900 transition-all duration-300 hover:border-gray-400 hover:shadow-md hover:bg-gray-50 overflow-hidden'>
 			<div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700'></div>
 			<div className='relative flex items-center justify-between gap-2'>
-				{/* 폰 폭에서 WINE BY THE GLASS 가 한 줄에 들어가도록 글자 크기·자간을 줄인다 */}
+				{/* 폰 폭에서 WINE by the GLASS 가 한 줄에 들어가도록 글자 크기·자간을 줄인다.
+				    대소문자는 label 에 쓴 그대로 보여준다 (uppercase 를 걸면 'by the' 가 대문자로 바뀜) */}
 				<span className='flex flex-wrap items-baseline gap-x-2'>
-					<span className='text-base min-[400px]:text-lg sm:text-xl font-light tracking-[0.12em] sm:tracking-[0.2em] uppercase'>
+					<span className='text-base min-[400px]:text-lg sm:text-xl font-light tracking-[0.12em] sm:tracking-[0.2em]'>
 						{label}
 					</span>
 					{sub && <span className='text-xs text-gray-500 tracking-[0.12em]'>{sub}</span>}
@@ -46,7 +47,7 @@ export default async function HomePage() {
 					<div className='flex flex-col gap-5 w-full max-w-md mb-4'>
 						<MenuButton href='/tapas' label='MENU' />
 						<MenuButton href='/wines/conventional' label='WINELIST' sub='(BOTTLE)' />
-						<MenuButton href='/wines/glass' label='WINE BY THE GLASS' sub='(GLASS)' />
+						<MenuButton href='/wines/glass' label='WINE by the GLASS' sub='(GLASS)' />
 					</div>
 
 					<div className='border-t border-gray-300 w-full h-1 mb-4'></div>

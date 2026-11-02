@@ -30,7 +30,7 @@ export default async function GlassWinesPage() {
 				return (
 					<div key={type} className='p-4'>
 						<div className='my-4 text-lg font-bold'>{title}</div>
-						<WineList wines={list} />
+						<WineList wines={list} priceSuffix=' / Glass (120ml)' />
 					</div>
 				);
 			})}

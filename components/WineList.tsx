@@ -4,9 +4,11 @@ import type { Wine } from '@/types';
 
 interface WineListProps {
 	wines: Wine[];
+	/** 가격 뒤에 붙는 문구 (예: 글라스 메뉴의 ' / Glass (120ml)') */
+	priceSuffix?: string;
 }
 
-export default function WineList({ wines }: WineListProps) {
+export default function WineList({ wines, priceSuffix }: WineListProps) {
 	return (
 		<div>
 			{wines.map((v) => (
@@ -41,7 +43,10 @@ export default function WineList({ wines }: WineListProps) {
 							<p className='text-xs'>{v.grape}</p>
 						</div>
 						<div>
-							<p className='text-xs font-bold mt-2'>{v.price.toLocaleString('ko-KR')}</p>
+							<p className='text-xs font-bold mt-2'>
+								{v.price.toLocaleString('ko-KR')}
+								{priceSuffix && <span className='font-normal'>{priceSuffix}</span>}
+							</p>
 						</div>
 						<div className='my-2'>
 							<p className='text-sm tracking-tighter break-keep w-[90%]'>{v.desc}</p>
