@@ -12,10 +12,10 @@ const SECTIONS: { type: Wine['type']; title: string }[] = [
 	{ type: 'Orange', title: 'ORANGE WINES' },
 ];
 
-// 페이지 맨 위 제목 (홈 버튼과 같은 가는 글씨·넓은 자간)
+// 페이지 맨 위 제목 (홈 버튼과 같은 가는 글씨·넓은 자간, 아래 종류 제목과 같은 왼쪽 선에 맞춤)
 function PageTitle() {
 	return (
-		<h1 className='px-4 pt-2 text-center text-xl min-[400px]:text-2xl font-light tracking-[0.12em] sm:tracking-[0.2em]'>
+		<h1 className='px-4 pt-2 text-xl min-[400px]:text-2xl font-light tracking-[0.12em] sm:tracking-[0.2em]'>
 			Wine by the Glass
 		</h1>
 	);
