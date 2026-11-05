@@ -12,6 +12,15 @@ const SECTIONS: { type: Wine['type']; title: string }[] = [
 	{ type: 'Orange', title: 'ORANGE WINES' },
 ];
 
+// 페이지 맨 위 제목 (홈 버튼과 같은 가는 글씨·넓은 자간)
+function PageTitle() {
+	return (
+		<h1 className='px-4 pt-2 text-center text-xl min-[400px]:text-2xl font-light tracking-[0.12em] sm:tracking-[0.2em]'>
+			Wine by the Glass
+		</h1>
+	);
+}
+
 export default async function GlassWinesPage() {
 	const items = await getGlassWines();
 
@@ -19,11 +28,17 @@ export default async function GlassWinesPage() {
 	const wines: Wine[] = items.map(({ glassPrice, wine }) => ({ ...wine, price: glassPrice }));
 
 	if (wines.length === 0) {
-		return <div className='p-4 my-10 text-center text-sm text-gray-500'>현재 준비된 글라스 와인이 없습니다.</div>;
+		return (
+			<div>
+				<PageTitle />
+				<div className='p-4 my-10 text-center text-sm text-gray-500'>현재 준비된 글라스 와인이 없습니다.</div>
+			</div>
+		);
 	}
 
 	return (
 		<div>
+			<PageTitle />
 			{SECTIONS.map(({ type, title }) => {
 				const list = wines.filter((w) => w.type === type);
 				if (list.length === 0) return null;
