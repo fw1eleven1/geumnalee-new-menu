@@ -1,6 +1,15 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { Marcellus } from 'next/font/google';
 import Header from '@/components/Header';
 import './globals.css';
+
+// 영문 제목용 서체 (로고 글자와 어울리는 끝이 살짝 퍼지는 형태)
+const marcellus = Marcellus({
+	weight: '400',
+	subsets: ['latin'],
+	display: 'swap',
+	variable: '--font-marcellus',
+});
 
 export const metadata: Metadata = {
 	title: 'GEUMNALEE - TAPAS BAR',
@@ -12,20 +21,20 @@ export const metadata: Metadata = {
 	},
 };
 
+export const viewport: Viewport = {
+	themeColor: '#ffffff',
+};
+
 export default function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang='ko'>
+		<html lang='ko' className={marcellus.variable}>
 			<body className='antialiased'>
-				<div className='container mx-auto min-h-screen sm:h-full md:w-[600px]'>
-					<div className='flex flex-col h-full'>
-						<Header />
-						{children}
-					</div>
-				</div>
+				<Header />
+				<main>{children}</main>
 			</body>
 		</html>
 	);

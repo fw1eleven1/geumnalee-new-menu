@@ -1,16 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import parse from 'html-react-parser';
-import Rating from '@/components/Rating';
 import { getWines } from '@/lib/api';
 import type { Wine } from '@/types';
+import WineCard from './WineCard';
+import SectionHead from './SectionHead';
+import Icon from './Icon';
+import SelectSheet from './SelectSheet';
 
 export interface TapasOption {
 	id: string;
 	option: string;
 	value: string;
+	category?: 'main' | 'side';
 }
 
 interface MySelect {
@@ -26,33 +29,71 @@ interface RecommendFormProps {
 	initialTapasOptions: TapasOption[];
 }
 
+const AI_URL = 'https://asia-northeast3-geumnalee.cloudfunctions.net/recommendAI/api/recommend';
+
+const WINE_TYPES = [
+	{ value: 'red', label: '레드' },
+	{ value: 'white', label: '화이트' },
+	{ value: 'orange', label: '오렌지', only: 'natural' },
+	{ value: 'sparkling', label: '스파클링', only: 'conventional' },
+] as const;
+
+const BODIES = [
+	{ value: '가벼운 바디감', label: '가벼운' },
+	{ value: '적당한 바디감', label: '적당한' },
+	{ value: '묵직한 바디감', label: '묵직한' },
+];
+
+const TASTES = [
+	{ value: '', label: '상관없음' },
+	{ value: 'acid', label: '산미' },
+	{ value: 'tannin', label: '탄닌감' },
+	{ value: 'sweet', label: '단맛' },
+];
+
+const WINE_API_TYPE: Record<string, string> = { red: 'Red', white: 'White', orange: 'Orange', sparkling: 'Sparkling' };
+
+// 메뉴 상세 시트에서 넘어오면 ?tapas=<id> 로 첫 번째 음식을 미리 고른다
+const noopSubscribe = () => () => {};
+const readPrefill = () => new URLSearchParams(window.location.search).get('tapas');
+
+const prefersReduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 export default function RecommendForm({ initialTapasOptions }: RecommendFormProps) {
 	const [myselect, setMyselect] = useState<MySelect>({
 		category: 'conventional',
 		wine: 'red',
-		body: '풍부한 바디감',
+		body: '묵직한 바디감', // 기존 셀렉트에서 처음 보이던 값
 		taste: '',
 	});
-	const [isError, setIsError] = useState({ status: false, msg: '' });
+	const prefill = useSyncExternalStore(noopSubscribe, readPrefill, () => null);
+	const [tapasPick, setTapasPick] = useState<string | null>(null);
+	const [tapas2Id, setTapas2Id] = useState('');
+	const [fieldError, setFieldError] = useState(false);
+	const [requestError, setRequestError] = useState('');
 	const [aiResult, setAiResult] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
-	const [tapas, setTapas] = useState<TapasOption | null>(null);
-	const [tapas2, setTapas2] = useState<TapasOption | null>(null);
-	const [tapasOptions, setTapasOptions] = useState<TapasOption[]>(initialTapasOptions);
-	const [tapas2Options, setTapas2Options] = useState<TapasOption[]>(initialTapasOptions);
 	const [recommendWine, setRecommendWine] = useState<string[]>([]);
 	const [wineList, setWineList] = useState<Wine[]>([]);
-	const aiRef = useRef<HTMLDivElement>(null);
+	const resultRef = useRef<HTMLDivElement>(null);
+	const tapasRef = useRef<HTMLButtonElement | null>(null);
+
+	const tapasId =
+		tapasPick ?? (prefill && initialTapasOptions.some((o) => o.id === prefill) ? prefill : '');
+	const tapas = initialTapasOptions.find((o) => o.id === tapasId) ?? null;
+	const tapas2 = initialTapasOptions.find((o) => o.id === tapas2Id) ?? null;
 
 	const sendToAI = async () => {
 		if (isLoading) return;
 
-		setIsError({ status: false, msg: '' });
+		setRequestError('');
 
 		if (!tapas) {
-			setIsError({ status: true, msg: '곁들일 음식 한 가지를 선택해 주세요' });
+			setFieldError(true);
+			tapasRef.current?.focus();
 			return;
 		}
+		setFieldError(false);
 
 		const selected = {
 			...myselect,
@@ -60,11 +101,10 @@ export default function RecommendForm({ initialTapasOptions }: RecommendFormProp
 			tapas2: tapas2?.value,
 		};
 
-		const url = 'https://asia-northeast3-geumnalee.cloudfunctions.net/recommendAI/api/recommend';
 		setIsLoading(true);
 
 		try {
-			const response = await fetch(url, {
+			const response = await fetch(AI_URL, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(selected),
@@ -73,13 +113,11 @@ export default function RecommendForm({ initialTapasOptions }: RecommendFormProp
 			const json = await response.json();
 
 			if (json.result === 'error') {
-				alert('오류가 발생하였습니다. 다시 시도해 주세요.');
-				setIsLoading(false);
+				setRequestError('추천을 받지 못했어요. 잠시 후 다시 시도해 주세요.');
 				return;
 			}
 
 			const resultMessage = json.msg.replace(/[*_]{2}([^*_]+)[*_]{2}/g, '<b>$1</b>');
-			setAiResult(resultMessage);
 
 			const regex = /\*\*(.*?)\*\*/g;
 			let match;
@@ -89,61 +127,40 @@ export default function RecommendForm({ initialTapasOptions }: RecommendFormProp
 			}
 
 			// Fetch wines from API
-			const wines = await getWines(
-				myselect.category,
-				myselect.wine === 'red'
-					? 'Red'
-					: myselect.wine === 'white'
-						? 'White'
-						: myselect.wine === 'orange'
-							? 'Orange'
-							: 'Sparkling',
-			);
+			const wines = await getWines(myselect.category, WINE_API_TYPE[myselect.wine] ?? 'Sparkling');
 			setWineList(wines);
 			setRecommendWine(matches);
+			setAiResult(resultMessage);
 		} catch (err) {
 			console.error(err);
-			alert('오류가 발생하였습니다. 다시 시도해 주세요.');
+			setRequestError('추천을 받지 못했어요. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.');
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>, key: keyof MySelect) => {
-		const value = e.target.value;
+	const updateSelect = (key: keyof MySelect, value: string) => {
 		setMyselect((prev) => {
-			const updated = { ...prev, [key]: value };
+			const updated = { ...prev, [key]: value } as MySelect;
 
 			if (key === 'category') {
-				if (prev.wine === 'orange' && value === 'conventional') {
-					updated.wine = 'red';
-				}
-				if (prev.wine === 'sparkling' && value === 'natural') {
-					updated.wine = 'red';
-				}
+				if (prev.wine === 'orange' && value === 'conventional') updated.wine = 'red';
+				if (prev.wine === 'sparkling' && value === 'natural') updated.wine = 'red';
 			}
 
 			return updated;
 		});
 	};
 
-	const handleTapas = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const selectedId = e.target.value;
-		const selectTapas = tapasOptions.find((v) => v.id === selectedId);
-		setTapas(selectTapas || null);
-		setTapas2Options(initialTapasOptions.filter((v) => v.id !== selectedId));
-	};
-
-	const handleTapas2 = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const selectedId = e.target.value;
-		const selectTapas2 = tapas2Options.find((v) => v.id === selectedId);
-		setTapas2(selectTapas2 || null);
-		setTapasOptions(initialTapasOptions.filter((v) => v.id !== selectedId));
+	const handleTapas = (id: string) => {
+		setTapasPick(id);
+		if (id && id === tapas2Id) setTapas2Id('');
+		if (id) setFieldError(false);
 	};
 
 	useEffect(() => {
 		if (isLoading || aiResult) {
-			aiRef.current?.scrollIntoView({ behavior: 'smooth' });
+			resultRef.current?.scrollIntoView({ behavior: prefersReduced() ? 'auto' : 'smooth', block: 'start' });
 		}
 	}, [isLoading, aiResult]);
 
@@ -151,207 +168,186 @@ export default function RecommendForm({ initialTapasOptions }: RecommendFormProp
 		setAiResult('');
 		setWineList([]);
 		setRecommendWine([]);
+		document.getElementById('somm-top')?.scrollIntoView({ behavior: prefersReduced() ? 'auto' : 'smooth' });
 	};
+
+	// AI 답변에서 굵게 표시된 영문 이름과 리스트를 맞춰 추천 와인 카드를 만든다
+	const recommended = recommendWine
+		.map((v) => wineList.find((x) => x.engName === v.replace(/"/gi, '')))
+		.filter((x, i, arr): x is Wine => x !== undefined && arr.findIndex((y) => y?.id === x.id) === i);
+
+	// 음식 목록은 구분 없이 하나로 (메뉴 페이지와 같은 순서: 메인 → 사이드)
+	const orderedTapas = [
+		...initialTapasOptions.filter((o) => o.category !== 'side'),
+		...initialTapasOptions.filter((o) => o.category === 'side'),
+	];
+	const tapasOptions = (otherId: string, note: string) =>
+		orderedTapas.map((o) => ({
+			value: o.id,
+			label: o.option,
+			disabled: o.id === otherId,
+			note: o.id === otherId ? note : undefined,
+		}));
 
 	return (
 		<>
-			{/* 폼 섹션 */}
-			<div className='bg-white rounded-2xl shadow-lg p-6 mb-8'>
-				<div className='space-y-6'>
-					{/* 와인 카테고리 */}
-					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-2'>와인 종류</label>
-						<select
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors'
-							onChange={(e) => handleSelect(e, 'category')}
-							value={myselect.category}>
-							<option value='conventional'>Conventional</option>
-						</select>
+			<form
+				className='form'
+				noValidate
+				onSubmit={(e) => {
+					e.preventDefault();
+					sendToAI();
+				}}>
+				<fieldset>
+					<legend>와인 타입</legend>
+					<div className='seg'>
+						{WINE_TYPES.filter((t) => !('only' in t) || t.only === myselect.category).map((t) => (
+							<label key={t.value} className='choice'>
+								<input
+									type='radio'
+									name='wine'
+									value={t.value}
+									checked={myselect.wine === t.value}
+									onChange={() => updateSelect('wine', t.value)}
+								/>
+								<span>{t.label}</span>
+							</label>
+						))}
 					</div>
+				</fieldset>
 
-					{/* 와인 타입 */}
-					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-2'>와인 타입</label>
-						<select
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors'
-							onChange={(e) => handleSelect(e, 'wine')}
-							value={myselect.wine}>
-							<option value='red'>레드 와인</option>
-							<option value='white'>화이트 와인</option>
-							{myselect.category === 'natural' && <option value='orange'>오렌지 와인</option>}
-							{myselect.category === 'conventional' && <option value='sparkling'>스파클링 와인</option>}
-						</select>
-					</div>
-
-					{/* 첫 번째 음식 선택 */}
-					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-2'>
-							곁들일 음식 <span className='text-red-500'>*</span>
-						</label>
-						<select
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors'
-							onChange={handleTapas}
-							defaultValue=''>
-							<option value=''>음식을 선택해주세요</option>
-							{tapasOptions.map((v) => (
-								<option key={v.id} value={v.id}>
-									{v.option}
-								</option>
-							))}
-						</select>
-					</div>
-
-					{/* 두 번째 음식 선택 */}
-					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-2'>추가 음식 (선택)</label>
-						<select
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors'
-							onChange={handleTapas2}
-							defaultValue=''>
-							<option value=''>음식을 선택해주세요</option>
-							{tapas2Options.map((v) => (
-								<option key={v.id} value={v.id}>
-									{v.option}
-								</option>
-							))}
-						</select>
-					</div>
-
-					{/* 바디감 */}
-					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-2'>바디감</label>
-						<select
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors'
-							onChange={(e) => handleSelect(e, 'body')}
-							value={myselect.body}>
-							<option value='묵직한 바디감'>묵직한 바디감</option>
-							<option value='적당한 바디감'>적당한 바디감</option>
-							<option value='가벼운 바디감'>가벼운 바디감</option>
-						</select>
-					</div>
-
-					{/* 취향 */}
-					<div>
-						<label className='block text-sm font-medium text-gray-700 mb-2'>취향 (선택)</label>
-						<select
-							className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors'
-							onChange={(e) => handleSelect(e, 'taste')}
-							value={myselect.taste}>
-							<option value=''>취향을 선택해 주세요</option>
-							<option value='acid'>산미가 있었으면 좋겠어요</option>
-							<option value='tannin'>쌉쌀한 탄닌감이 높았으면 좋겠어요</option>
-							<option value='sweet'>조금 달았으면 좋겠어요</option>
-						</select>
-					</div>
-
-					{/* 에러 메시지 */}
-					{isError.status && (
-						<div className='bg-red-50 border border-red-200 rounded-lg p-4'>
-							<p className='text-red-600 text-sm'>{isError.msg}</p>
-						</div>
+				<div className={`field${fieldError ? ' is-error' : ''}`}>
+					<label className='label' id='tapas1-label' htmlFor='tapas1'>
+						곁들일 음식<span className='req'>필수</span>
+					</label>
+					<SelectSheet
+						id='tapas1'
+						labelId='tapas1-label'
+						title='곁들일 음식'
+						value={tapasId}
+						placeholder='음식을 선택해 주세요'
+						options={tapasOptions(tapas2Id, '추가 음식으로 선택됨')}
+						onChange={handleTapas}
+						invalid={fieldError}
+						describedBy={fieldError ? 'tapas1-err' : undefined}
+						triggerRef={tapasRef}
+					/>
+					{fieldError && (
+						<p className='field-error' id='tapas1-err'>
+							<Icon name='alert' />
+							<span>곁들일 음식을 한 가지 골라 주세요. 음식에 맞춰 와인을 추천해 드려요.</span>
+						</p>
 					)}
 				</div>
-			</div>
 
-			{/* AI 결과 섹션 */}
-			{(isLoading || aiResult) && (
-				<div className='bg-white rounded-2xl shadow-lg p-6 mb-8'>
-					{isLoading && (
-						<div className='text-center py-8'>
-							<div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mb-4'></div>
-							<p className='text-gray-600'>AI가 답변을 작성 중이에요...</p>
-						</div>
-					)}
-					<div ref={aiRef}>
-						{aiResult && (
-							<div className='prose prose-amber max-w-none'>
-								<div className='bg-amber-50 rounded-lg p-4 mb-6 whitespace-pre-line break-all'>{parse(aiResult)}</div>
-							</div>
-						)}
-					</div>
+				<div className='field'>
+					<label className='label' id='tapas2-label' htmlFor='tapas2'>
+						추가 음식<span className='opt'>선택</span>
+					</label>
+					<SelectSheet
+						id='tapas2'
+						labelId='tapas2-label'
+						title='추가 음식'
+						value={tapas2Id}
+						placeholder='선택 안 함'
+						emptyLabel='선택 안 함'
+						options={tapasOptions(tapasId, '곁들일 음식으로 선택됨')}
+						onChange={setTapas2Id}
+					/>
 				</div>
-			)}
 
-			{/* 추천 와인 목록 */}
-			{recommendWine.length > 0 && (
-				<div className='bg-white rounded-2xl shadow-lg p-6 mb-8'>
-					<h3 className='text-xl font-bold text-gray-800 mb-6'>추천 와인</h3>
-					<div className='space-y-8'>
-						{recommendWine.map((v, i) => (
-							<div key={i}>
-								{wineList.map((x) => {
-									if (x.engName === v.replace(/"/gi, '')) {
-										return (
-											<div key={x.id} className='flex gap-6 p-6 bg-gray-50 rounded-xl' id={x.name.replace(/\s/g, '%20')}>
-												<div className='flex-1'>
-													<div className='mb-4'>
-														<h4 className='text-lg font-semibold text-gray-800 mb-1'>{x.name}</h4>
-														<p className='text-gray-600 text-sm mb-2'>{x.engName}</p>
-														<div className='flex items-center text-sm text-gray-500 space-x-2'>
-															{x.year && <span>{x.year}</span>}
-															{x.year && x.made && <span>|</span>}
-															{x.made && <span>{x.made}</span>}
-															{x.made && x.alc && <span>|</span>}
-															{x.alc && <span>{x.alc}</span>}
-														</div>
-													</div>
-													<div className='mb-3'>
-														<p className='text-sm text-gray-600'>{x.grape}</p>
-													</div>
-													<div className='mb-4'>
-														<p className='text-lg font-bold text-amber-600'>{x.price.toLocaleString('ko-KR')}원</p>
-													</div>
-													<div className='mb-4'>
-														<p className='text-sm text-gray-700 leading-relaxed mb-2'>{x.desc}</p>
-														<p className='text-sm text-gray-600'>{x.opinion}</p>
-													</div>
-													{x.rating && x.rating.length > 0 && <Rating rating={x.rating} maxRating={x.maxRating} />}
-													{x.vivino && <p className='text-amber-600 mt-3 text-sm whitespace-pre-line'>{x.vivino}</p>}
-												</div>
-												<div className='flex-shrink-0'>
-													{x.img && (
-														<Image
-															src={x.img}
-															alt={x.name}
-															width={96}
-															height={200}
-															className='rounded-lg object-contain'
-															style={{ width: '96px', height: 'auto' }}
-															unoptimized
-														/>
-													)}
-												</div>
-											</div>
-										);
-									}
-									return null;
-								})}
+				<fieldset>
+					<legend>바디감</legend>
+					<div className='seg'>
+						{BODIES.map((b) => (
+							<label key={b.value} className='choice'>
+								<input
+									type='radio'
+									name='body'
+									value={b.value}
+									checked={myselect.body === b.value}
+									onChange={() => updateSelect('body', b.value)}
+								/>
+								<span>{b.label}</span>
+							</label>
+						))}
+					</div>
+				</fieldset>
+
+				<fieldset>
+					<legend>
+						더 원하는 맛<span className='opt'>선택</span>
+					</legend>
+					<div className='picks'>
+						{TASTES.map((t) => (
+							<label key={t.value || 'none'} className='choice'>
+								<input
+									type='radio'
+									name='taste'
+									value={t.value}
+									checked={myselect.taste === t.value}
+									onChange={() => updateSelect('taste', t.value)}
+								/>
+								<span>{t.label}</span>
+							</label>
+						))}
+					</div>
+				</fieldset>
+
+				{requestError && (
+					<p className='field-error' role='alert'>
+						<Icon name='alert' />
+						<span>{requestError}</span>
+					</p>
+				)}
+
+				{aiResult === '' && (
+					<button className='btn btn-primary' type='submit' aria-busy={isLoading}>
+						{isLoading ? '추천하는 중…' : '와인 추천받기'}
+					</button>
+				)}
+			</form>
+
+			<div ref={resultRef} aria-live='polite'>
+				{isLoading && (
+					<div className='loading'>
+						<p className='loading-msg'>AI 소믈리에 금나리가 답변을 작성하고 있어요…</p>
+						<div className='loading-track' aria-hidden='true'>
+							<i />
+						</div>
+						{[0, 1].map((i) => (
+							<div key={i} className='skel' aria-hidden='true'>
+								<div className='skel-lines'>
+									<b />
+									<b />
+									<b />
+									<b />
+								</div>
+								<span className='skel-bottle' />
 							</div>
 						))}
 					</div>
-				</div>
-			)}
-
-			{/* 버튼 섹션 */}
-			<div className='text-center'>
-				{aiResult === '' && (
-					<button
-						className={`w-full max-w-md px-8 py-4 rounded-xl font-semibold text-white transition-all duration-200 ${
-							isLoading
-								? 'bg-gray-300 cursor-not-allowed'
-								: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transform hover:-translate-y-1'
-						}`}
-						onClick={sendToAI}
-						disabled={isLoading}>
-						{isLoading ? '처리 중...' : '와인 추천 받기'}
-					</button>
 				)}
-				{aiResult && (
-					<button
-						className='w-full max-w-md px-8 py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200'
-						onClick={resetRecommend}>
-						다시 추천받기
-					</button>
+
+				{!isLoading && aiResult && (
+					<section className='result' aria-labelledby='result-h'>
+						<SectionHead id='result-h' title='For You' ko='금나리의 추천' />
+						<div className='answer'>{parse(aiResult)}</div>
+
+						{recommended.length > 0 && (
+							<ul className='wine-list' role='list'>
+								{recommended.map((x) => (
+									<li key={x.id}>
+										<WineCard wine={x} idPrefix='rec' />
+									</li>
+								))}
+							</ul>
+						)}
+
+						<button type='button' className='btn btn-ghost' onClick={resetRecommend}>
+							다시 추천받기
+						</button>
+					</section>
 				)}
 			</div>
 		</>

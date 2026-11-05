@@ -1,36 +1,17 @@
-import { getAllNaturalWines } from '@/lib/api';
-import WineList from '@/components/WineList';
+import { getWines } from '@/lib/api';
+import PageTabs from '@/components/PageTabs';
+import WineSections from '@/components/WineSections';
 
 export const revalidate = 86400; // 24시간마다 재검증
 
+// 메뉴판에서는 링크를 숨겨 둔 페이지 — 주소로 들어오면 보틀 탭 아래 내추럴 와인으로 보인다
 export default async function NaturalWinesPage() {
-	const { red, orange, white } = await getAllNaturalWines();
+	const wines = await getWines('natural');
 
 	return (
-		<div>
-			{/* Red */}
-			{red.length > 0 && (
-				<div className='p-4'>
-					<div className='my-4 text-lg font-bold'>RED</div>
-					<WineList wines={red} />
-				</div>
-			)}
-
-			{/* Orange */}
-			{orange.length > 0 && (
-				<div className='p-4'>
-					<div className='my-4 text-lg font-bold'>ORANGE</div>
-					<WineList wines={orange} />
-				</div>
-			)}
-
-			{/* White */}
-			{white.length > 0 && (
-				<div className='p-4'>
-					<div className='my-4 text-lg font-bold'>WHITE</div>
-					<WineList wines={white} />
-				</div>
-			)}
-		</div>
+		<>
+			<PageTabs active='bottle' title='NATURAL — 내추럴 와인' />
+			<WineSections wines={wines} order={['Red', 'Orange', 'White']} prefix='natural' />
+		</>
 	);
 }

@@ -1,25 +1,25 @@
 import type { WineRating } from '@/types';
 
 interface RatingProps {
-  rating: WineRating[];
-  maxRating: number;
+	rating: WineRating[];
+	maxRating: number;
 }
 
+// 바디·산미·당도 — ●○ 대신 칸 막대 (칸 수 = maxRating)
 export default function Rating({ rating, maxRating }: RatingProps) {
-  return (
-    <div className="mt-1">
-      {rating.map((v, i) => (
-        <div key={i} className="flex items-center">
-          <span className="text-xs mr-2">{v.type}</span>
-          {Array(maxRating)
-            .fill(0)
-            .map((_, ii) => (
-              <div key={ii} className="text-xs xs:text-sm">
-                {ii < v.rating ? '●' : '○'}
-              </div>
-            ))}
-        </div>
-      ))}
-    </div>
-  );
+	const max = maxRating || 5;
+	return (
+		<div className='taste'>
+			{rating.map((v, i) => (
+				<div key={i} className='taste-item'>
+					<span className='taste-label'>{v.type}</span>
+					<span className='taste-bar' role='img' aria-label={`${v.type} ${max}단계 중 ${v.rating}`}>
+						{Array.from({ length: max }, (_, ii) => (
+							<i key={ii} className={ii < v.rating ? 'on' : undefined} />
+						))}
+					</span>
+				</div>
+			))}
+		</div>
+	);
 }
